@@ -6118,17 +6118,9 @@ function lower_convention(
                 push!(attributes, prev)
             end
         end
-        if LLVM.version().major > 15
-            if kind(prev) == kind(EnumAttribute("memory"))
-                old = MemoryEffect(value(attr))
-                mem = MemoryEffect(
-                    (set_writing(getModRef(old, ArgMem)) << getLocationPos(ArgMem)) |
-                    (getModRef(old, InaccessibleMem) << getLocationPos(InaccessibleMem)) |
-                    (getModRef(old, Other) << getLocationPos(Other)),
-                )
-                push!(attributes, EnumAttribute("memory", mem.data))
-            end
-        end
+        # The entry's `memory` attribute doesn't describe the wrapper, which also loads its
+        # arguments from and stores its result to memory, and may allocate. Leave the wrapper
+        # without one, so that it may access any memory.
         if kind(prev) == kind(EnumAttribute("speculatable"))
             push!(attributes, prev)
         end
